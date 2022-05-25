@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+option go_package = "simple/testgrpc";
+
+message SimpleRequest{
+    string request_need = 1;
+}
+
+message SimpleResponse{
+    string response = 1;
+}
+
+service SimpleService{
+    rpc RPCRequest(SimpleRequest) returns (SimpleResponse);
+    rpc ServerStreaming(SimpleRequest) returns (stream SimpleResponse);
+    rpc ClientStreaming(stream SimpleRequest) returns (SimpleResponse);
+}
