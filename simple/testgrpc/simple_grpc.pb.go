@@ -25,6 +25,7 @@ type SimpleServiceClient interface {
 	RPCRequest(ctx context.Context, in *SimpleRequest, opts ...grpc.CallOption) (*SimpleResponse, error)
 	ServerStreaming(ctx context.Context, in *SimpleRequest, opts ...grpc.CallOption) (SimpleService_ServerStreamingClient, error)
 	ClientStreaming(ctx context.Context, opts ...grpc.CallOption) (SimpleService_ClientStreamingClient, error)
+	StreamingBiDirectional(ctx context.Context, opts ...grpc.CallOption) (SimpleService_StreamingBiDirectionalClient, error)
 }
 
 type simpleServiceClient struct {
@@ -110,6 +111,37 @@ func (x *simpleServiceClientStreamingClient) CloseAndRecv() (*SimpleResponse, er
 	return m, nil
 }
 
+func (c *simpleServiceClient) StreamingBiDirectional(ctx context.Context, opts ...grpc.CallOption) (SimpleService_StreamingBiDirectionalClient, error) {
+	stream, err := c.cc.NewStream(ctx, &SimpleService_ServiceDesc.Streams[2], "/SimpleService/StreamingBiDirectional", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &simpleServiceStreamingBiDirectionalClient{stream}
+	return x, nil
+}
+
+type SimpleService_StreamingBiDirectionalClient interface {
+	Send(*SimpleRequest) error
+	Recv() (*SimpleResponse, error)
+	grpc.ClientStream
+}
+
+type simpleServiceStreamingBiDirectionalClient struct {
+	grpc.ClientStream
+}
+
+func (x *simpleServiceStreamingBiDirectionalClient) Send(m *SimpleRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *simpleServiceStreamingBiDirectionalClient) Recv() (*SimpleResponse, error) {
+	m := new(SimpleResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // SimpleServiceServer is the server API for SimpleService service.
 // All implementations must embed UnimplementedSimpleServiceServer
 // for forward compatibility
@@ -117,6 +149,7 @@ type SimpleServiceServer interface {
 	RPCRequest(context.Context, *SimpleRequest) (*SimpleResponse, error)
 	ServerStreaming(*SimpleRequest, SimpleService_ServerStreamingServer) error
 	ClientStreaming(SimpleService_ClientStreamingServer) error
+	StreamingBiDirectional(SimpleService_StreamingBiDirectionalServer) error
 	mustEmbedUnimplementedSimpleServiceServer()
 }
 
@@ -132,6 +165,9 @@ func (UnimplementedSimpleServiceServer) ServerStreaming(*SimpleRequest, SimpleSe
 }
 func (UnimplementedSimpleServiceServer) ClientStreaming(SimpleService_ClientStreamingServer) error {
 	return status.Errorf(codes.Unimplemented, "method ClientStreaming not implemented")
+}
+func (UnimplementedSimpleServiceServer) StreamingBiDirectional(SimpleService_StreamingBiDirectionalServer) error {
+	return status.Errorf(codes.Unimplemented, "method StreamingBiDirectional not implemented")
 }
 func (UnimplementedSimpleServiceServer) mustEmbedUnimplementedSimpleServiceServer() {}
 
@@ -211,6 +247,32 @@ func (x *simpleServiceClientStreamingServer) Recv() (*SimpleRequest, error) {
 	return m, nil
 }
 
+func _SimpleService_StreamingBiDirectional_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(SimpleServiceServer).StreamingBiDirectional(&simpleServiceStreamingBiDirectionalServer{stream})
+}
+
+type SimpleService_StreamingBiDirectionalServer interface {
+	Send(*SimpleResponse) error
+	Recv() (*SimpleRequest, error)
+	grpc.ServerStream
+}
+
+type simpleServiceStreamingBiDirectionalServer struct {
+	grpc.ServerStream
+}
+
+func (x *simpleServiceStreamingBiDirectionalServer) Send(m *SimpleResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *simpleServiceStreamingBiDirectionalServer) Recv() (*SimpleRequest, error) {
+	m := new(SimpleRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // SimpleService_ServiceDesc is the grpc.ServiceDesc for SimpleService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -232,6 +294,12 @@ var SimpleService_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "ClientStreaming",
 			Handler:       _SimpleService_ClientStreaming_Handler,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "StreamingBiDirectional",
+			Handler:       _SimpleService_StreamingBiDirectional_Handler,
+			ServerStreams: true,
 			ClientStreams: true,
 		},
 	},
