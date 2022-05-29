@@ -11,8 +11,12 @@ message SimpleResponse{
 }
 
 service SimpleService{
+    // unary RPC
     rpc RPCRequest(SimpleRequest) returns (SimpleResponse);
+    // Server Streaming
     rpc ServerStreaming(SimpleRequest) returns (stream SimpleResponse);
+    // Client Streaming
     rpc ClientStreaming(stream SimpleRequest) returns (SimpleResponse);
+    // Bi-Directional Streaming
     rpc StreamingBiDirectional(stream SimpleRequest) returns (stream SimpleResponse);
 }
