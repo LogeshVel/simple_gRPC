@@ -22,3 +22,4 @@ and import the package
     import "github.com/LogeshVel/simple_gRPC/simple/testgrpc"
 
 
+The packages in this repo is used by the [Four gRPC modes](https://github.com/LogeshVel/four_gRPC_modes) repo
